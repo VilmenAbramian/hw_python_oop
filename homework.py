@@ -76,7 +76,8 @@ class SportsWalking(Training):
 
     CALORIES_WEIGHT_RATIO1 = 0.035
     CALORIES_WEIGHT_RATIO2 = 0.029
-    KMPH_IN_MS = 0.278  # kmph to ms
+    KMPH_IN_MS = round(Training.M_IN_KM
+                       / (Training.M_IN_H * Training.M_IN_H), 3)
     CM_IN_M = 100
 
     height: float
@@ -130,9 +131,9 @@ ERROR_ARGS_LEN = ('Для тренировки {type} передано неве�
 
 def read_package(workout_type: str, data: list[int]) -> Training:
     """Прочитать данные полученные от датчиков."""
-    train, args_len = WORKOUTS[workout_type]
     if workout_type not in WORKOUTS:
         raise ValueError(ERROR_TRAIN_TYPE.format(type=workout_type))
+    train, args_len = WORKOUTS[workout_type]
     if len(data) != args_len:
         raise ValueError(
             ERROR_ARGS_LEN.format(
@@ -145,7 +146,6 @@ def read_package(workout_type: str, data: list[int]) -> Training:
 
 def main(training: Training) -> None:
     """Главная функция."""
-
     print(training.show_training_info().get_message())
 
 
