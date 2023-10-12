@@ -1,4 +1,4 @@
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, fields
 
 
 @dataclass
@@ -62,8 +62,10 @@ class Running(Training):
 
     def get_spent_calories(self) -> float:
         return (
-            (self.CALORIES_SPEED_MULTIPLIER * self.get_mean_speed()
-                + self.CALORIES_SPEED_SHIFT)
+            (
+                self.CALORIES_SPEED_MULTIPLIER
+                * self.get_mean_speed() + self.CALORIES_SPEED_SHIFT
+            )
             * self.weight / self.M_IN_KM * self.duration * self.M_IN_H
         )
 
@@ -81,11 +83,17 @@ class SportsWalking(Training):
 
     def get_spent_calories(self) -> float:
         return (
-            (self.CALORIES_WEIGHT_RATIO1
-             * self.weight
-             + ((self.KMPH_IN_MS * self.get_mean_speed())**2
-                / (self.height / self.CM_IN_M))
-             * self.CALORIES_WEIGHT_RATIO2 * self.weight)
+            (
+                self.CALORIES_WEIGHT_RATIO1
+                * self.weight
+                + (
+                  (
+                      self.KMPH_IN_MS * self.get_mean_speed()
+                  )**2
+                    / (self.height / self.CM_IN_M)
+                )
+                * self.CALORIES_WEIGHT_RATIO2 * self.weight
+            )
             * self.duration * self.M_IN_H
         )
 
@@ -110,23 +118,29 @@ class Swimming(Training):
                 * self.SPEED_MULT * self.weight * self.duration)
 
 
-WORKOUTS = {'RUN': (Running, 3), 'WLK': (SportsWalking, 4),
-            'SWM': (Swimming, 5)}
+WORKOUTS = {'RUN': (Running, len(fields(Running))),
+            'WLK': (SportsWalking, len(fields(SportsWalking))),
+            'SWM': (Swimming, len(fields(Swimming)))}
 
-ERROR_MESSAGE_1 = '{type} - несуществующий тип тренировки'
-ERROR_MESSAGE_2 = 'Невероное количество параметров тренировки'
+ERROR_TRAIN_TYPE = '{type} - несуществующий тип тренировки'
+ERROR_ARGS_LEN = ('Для тренировки {type} передано неверное'
+                  'количество аргументов: {err_args}, '
+                  'так как требуется {right_args}')
 
 
 def read_package(workout_type: str, data: list[int]) -> Training:
     """Прочитать данные полученные от датчиков."""
-
+    train, args_len = WORKOUTS[workout_type]
     if workout_type not in WORKOUTS:
-        raise ValueError(ERROR_MESSAGE_1.format(type=workout_type))
-
-    if len(data) != WORKOUTS[workout_type][1]:
-        raise TypeError(ERROR_MESSAGE_2)
-
-    return WORKOUTS[workout_type][0](*data)
+        raise ValueError(ERROR_TRAIN_TYPE.format(type=workout_type))
+    if len(data) != args_len:
+        raise ValueError(
+            ERROR_ARGS_LEN.format(
+                type=workout_type,
+                err_args=len(data),
+                right_args=args_len)
+        )
+    return train(*data)
 
 
 def main(training: Training) -> None:
